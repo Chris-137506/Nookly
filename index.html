@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nookly - A Smarter Way to Organize and Share Learning Resources</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      font-family: var(--font-sans);
+      background-color: #FAFAFA;
+      color: #0F172A;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Hide scrollbar for tabs */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    @keyframes toastSlide {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .animate-fade { animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-sheet { animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-toast { animation: toastSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  </style>
+</head>
+<body class="bg-[#FAFAFA] min-h-screen text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+
+  <!-- Mobile-first Container Frame -->
+  <div class="max-w-md mx-auto min-h-screen bg-white sm:my-3 sm:rounded-3xl sm:border sm:border-slate-200/90 sm:shadow-lg flex flex-col relative pb-16">
+    
+    <!-- Top Header & Persistent Role Switcher -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3">
+      <div class="flex items-center justify-between gap-2">
+        <!-- Brand -->
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          </div>
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="font-bold tracking-tight text-slate-900 text-sm">Nookly</span>
+              <span class="text-[10px] uppercase font-bold tracking-wider bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200/60">UNESA</span>
+            </div>
+            <p class="text-[10px] text-slate-500 leading-none mt-0.5">FMIPA Sains Data</p>
+          </div>
+        </div>
+
+        <!-- Role Pill Switcher -->
+        <div id="role-switcher-container" class="bg-slate-100 p-0.5 rounded-full border border-slate-200/90 flex items-center shadow-inner">
+          <!-- Dynamically rendered -->
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Dynamic View -->
+    <main id="app-content" class="flex-1 p-4 overflow-y-auto">
+      <!-- Injected by render() -->
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1 max-w-md mx-auto">
+      <div id="nav-buttons-container" class="flex items-center justify-around">
+        <!-- Dynamically rendered -->
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- Reader Modal Sheet -->
+  <div id="reader-modal-sheet" class="fixed inset-0 z-50 hidden flex-col justify-end bg-slate-900/40 backdrop-blur-xs">
+    <div class="absolute inset-0" onclick="closeReader()"></div>
+    <div class="relative bg-white w-full max-w-md mx-auto rounded-t-2xl shadow-2xl border border-slate-200 max-h-[88vh] flex flex-col z-10 animate-sheet overflow-hidden">
+      <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-2"></div>
+      <div id="reader-content" class="p-4 overflow-y-auto flex-1 space-y-4">
+        <!-- Dynamic Reader Data -->
+      </div>
+      <div id="reader-footer" class="p-4 border-t border-slate-200/80 bg-slate-50/50 flex items-center gap-2">
+        <!-- Dynamic Footer Buttons -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject Feedback Modal -->
+  <div id="reject-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+    <div class="relative bg-white w-full max-w-sm rounded-2xl p-4 shadow-2xl border border-slate-200 z-10">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h4 class="font-bold text-slate-900 text-xs sm:text-sm">Tolak Pengajuan & Beri Feedback</h4>
+        <button onclick="closeRejectModal()" class="text-slate-400 hover:text-slate-600 p-1">&times;</button>
+      </div>
+      <div id="reject-modal-body" class="mt-3 space-y-3">
+        <!-- Dynamic Reject Content -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-3 right-3 left-3 sm:left-auto sm:w-80 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- CLIENT LOGIC & REACTIVE STATE -->
+  <script>
+    // 1. DATA STORES
+    const COURSES = [
+      {
+        id: 'c1',
+        code: 'SD101',
+        name: 'Kalkulus I',
+        sks: 3,
+        semester: 1,
+        lecturer: 'Dr. Dwi Lestari, M.Si.',
+        description: 'Konsep bilangan real, limit kontinu, turunan fungsi, dan aplikasi optimasi pada permodelan data sains.'
+      },
+      {
+        id: 'c2',
+        code: 'SD102',
+        name: 'Algoritma & Pemrograman',
+        sks: 4,
+        semester: 1,
+        lecturer: 'I Kadek Dwi Nuryana, S.T., M.Kom.',
+        description: 'Fondasi logika komputasi, struktur algoritma dasar, pseudocode, dan implementasi kode Python modern.'
+      },
+      {
+        id: 'c3',
+        code: 'SD103',
+        name: 'Pengantar Sains Data',
+        sks: 3,
+        semester: 1,
+        lecturer: 'Prof. Dr. Agus Triyono, M.Cs.',
+        description: 'Siklus hidup data (CRISP-DM), data wrangling, eksplorasi pandas, visualisasi seaborn, dan pengenalan ML.'
+      },
+      {
+        id: 'c4',
+        code: 'SD104',
+        name: 'Statistika Dasar',
+        sks: 3,
+        semester: 1,
+        lecturer: 'Endah Rahmawati, S.Si., M.Stat.',
+        description: 'Statistik deskriptif, ukuran pemusatan & keragaman, peluang dasar, sebaran distribusi, dan uji hipotesis.'
+      }
+    ];
+
+    const CHAPTERS = [
+      // Kalkulus I
+      { id: 'ch1', courseId: 'c1', number: 1, title: 'Sistem Bilangan Real & Pertidaksamaan', desc: 'Aksioma kelengkapan, pertidaksamaan pecahan kuadrat, dan nilai mutlak.' },
+      { id: 'ch2', courseId: 'c1', number: 2, title: 'Fungsi, Limit & Kekontinuan', desc: 'Definisi limit, teorema apit, limit trigonometri, dan uji kekontinuan.' },
+      { id: 'ch3', courseId: 'c1', number: 3, title: 'Turunan Fungsi & Aturan Rantai', desc: 'Laju perubahan sesaat, diferensiasi aljabar & trigonometri, dan aturan rantai.' },
+      { id: 'ch4', courseId: 'c1', number: 4, title: 'Aplikasi Turunan & Optimasi Nilai Ekstrem', desc: 'Uji turunan pertama/kedua, kecekungan kurva, dan pemodelan optimasi.' },
+
+      // Algoritma
+      { id: 'ch5', courseId: 'c2', number: 1, title: 'Logika Pemrograman & Flowchart Terstruktur', desc: 'Diagram alir standar ISO, pseudocode baku, dan variabel trace table.' },
+      { id: 'ch6', courseId: 'c2', number: 2, title: 'Struktur Data Dasar: List, Tuple & Dict', desc: 'Indexing, slicing, dictionary mapping, hash lookup, dan set operations.' },
+      { id: 'ch7', courseId: 'c2', number: 3, title: 'Percabangan, Looping & Modularitas Fungsi', desc: 'Nested conditionals, while/for loops, function arguments, dan lambda.' },
+
+      // Pengantar Sains Data
+      { id: 'ch8', courseId: 'c3', number: 1, title: 'Ekosistem Sains Data & Metodologi CRISP-DM', desc: 'Siklus hidup pemodelan, peran data scientist, dan studi kasus industri.' },
+      { id: 'ch9', courseId: 'c3', number: 2, title: 'Data Wrangling & Eksplorasi (Pandas & Seaborn)', desc: 'Imputasi missing value, deteksi outlier, dan korelasi data frame.' },
+      { id: 'ch10', courseId: 'c3', number: 3, title: 'Pengantar Machine Learning & Evaluasi Model', desc: 'Supervised vs unsupervised learning, data splitting, dan confusion matrix.' },
+
+      // Statistika Dasar
+      { id: 'ch11', courseId: 'c4', number: 1, title: 'Statistika Deskriptif & Ukuran Pemusatan', desc: 'Mean, median, modus, varians, deviasi standar, dan boxplot interkuartil.' },
+      { id: 'ch12', courseId: 'c4', number: 2, title: 'Teori Peluang & Distribusi Probabilitas Diskrit', desc: 'Aturan Bayes, permutasi kombinasi, distribusi Binomial dan Poisson.' },
+      { id: 'ch13', courseId: 'c4', number: 3, title: 'Distribusi Normal & Uji Hipotesis Dasar', desc: 'Kurva normal baku Z-score, taraf signifikansi alpha, dan uji rata-rata T-student.' }
+    ];
+
+    let MATERIALS = [
+      {
+        id: 'm1',
+        courseId: 'c1',
+        chapterId: 'ch2',
+        courseCode: 'SD101',
+        courseName: 'Kalkulus I',
+        chapterNumber: 2,
+        chapterTitle: 'Fungsi, Limit & Kekontinuan',
+        title: "Rangkuman Rumus Cepat Limit & Teorema L'Hopital",
+        description: 'Catatan komprehensif penanganan bentuk tak tentu 0/0, inf/inf, teorema limit trigonometri khusus, dan 15 contoh soal bertingkat.',
+        category: 'summary_notes',
+        fileType: 'pdf',
+        fileName: 'kalkulus1-bab2-rangkuman-limit.pdf',
+        fileSizeMb: 4.8,
+        status: 'approved',
+        contributorName: 'Dimas Arya',
+        contributorNim: '24051204001',
+        isVerified: true,
+        viewsCount: 248,
+        downloadsCount: 142,
+        createdAt: '2026-10-14',
+        approvedAt: '2026-10-15',
+        previewText: "RINGKASAN LIMIT KONTINU (FMIPA UNESA)\n\n1. Aturan L'Hopital:\n   Jika lim f(x)/g(x) menghasilkan bentuk [0/0] atau [inf/inf], maka lim f(x)/g(x) = lim f'(x)/g'(x) dengan syarat limit turunan tersebut ada.\n\n2. Teorema Limit Trigonometri Khusus:\n   - lim (sin x)/x saat x->0 = 1\n   - lim (tan x)/x saat x->0 = 1\n   - lim (1 - cos x)/x saat x->0 = 0\n\n3. Uji Kekontinuan Titik c:\n   Syarat mutlak: f(c) terdefinisi, limit kiri = limit kanan, dan nilai limit sama persis dengan f(c)."
+      },
+      {
+        id: 'm2',
+        courseId: 'c1',
+        chapterId: 'ch3',
+        courseCode: 'SD101',
+        courseName: 'Kalkulus I',
+        chapterNumber: 3,
+        chapterTitle: 'Turunan Fungsi & Aturan Rantai',
+        title: 'Latihan Soal UTS Kalkulus I Beserta Pembahasan 2024',
+        description: 'Kompilasi 8 paket soal UTS tahun lalu dari FMIPA UNESA dengan coretan kunci jawaban langkah demi langkah yang telah diverifikasi asisten dosen.',
+        category: 'practice_questions',
+        fileType: 'pdf',
+        fileName: 'bank-soal-uts-kalkulus1-fmipa.pdf',
+        fileSizeMb: 6.2,
+        status: 'approved',
+        contributorName: 'Siti Nurhaliza',
+        contributorNim: '23051204019',
+        isVerified: true,
+        viewsCount: 489,
+        downloadsCount: 312,
+        createdAt: '2026-10-18',
+        approvedAt: '2026-10-19',
+        previewText: "BANK SOAL UTS FMIPA UNESA - KALKULUS I\nDosen: Dr. Dwi Lestari, M.Si.\n\n[SOAL 1] Tentukan dy/dx dari x^3 + y^3 = 6xy\nCoretan Pembahasan:\nDiferensial implisit terhadap x:\n3x^2 + 3y^2 (dy/dx) = 6(y + x dy/dx)\n3x^2 + 3y^2 y' = 6y + 6x y'\ny'(3y^2 - 6x) = 6y - 3x^2\ndy/dx = (2y - x^2) / (y^2 - 2x) [TERBUKTI]"
+      },
+      {
+        id: 'm3',
+        courseId: 'c2',
+        chapterId: 'ch7',
+        courseCode: 'SD102',
+        courseName: 'Algoritma & Pemrograman',
+        chapterNumber: 3,
+        chapterTitle: 'Percabangan, Looping & Modularitas Fungsi',
+        title: 'Slide Kuliah: Alur Logika Percabangan & Loop Python',
+        description: 'Slide resmi pertemuan 5-6 mencakup diagram eksekusi alur percabangan nested if, loop invariant, dan handling infinite loop bugs.',
+        category: 'lecture_slides',
+        fileType: 'pptx',
+        fileName: 'slide-algo-looping-python.pptx',
+        fileSizeMb: 11.4,
+        status: 'approved',
+        contributorName: 'Tim Dosen Algo UNESA',
+        contributorNim: 'DOSEN-FMIPA',
+        isVerified: true,
+        viewsCount: 310,
+        downloadsCount: 185,
+        createdAt: '2026-10-22',
+        approvedAt: '2026-10-22',
+        previewText: "SLIDE RESMI PERTEMUAN 05\nMateri: Nested Loops & Conditional Flow\n\n- Mengapa loop while berisiko infinite loop jika update counter diabaikan?\n- Contoh penelusuran tabel memori (trace table) pada perulangan bersarang.\n- Praktik bersih: Menggunakan fungsi modular untuk menyederhanakan kode."
+      },
+      {
+        id: 'm4',
+        courseId: 'c2',
+        chapterId: 'ch6',
+        courseCode: 'SD102',
+        courseName: 'Algoritma & Pemrograman',
+        chapterNumber: 2,
+        chapterTitle: 'Struktur Data Dasar: List, Tuple & Dict',
+        title: 'Cheat Sheet Sintaks List, Dict, Tuple & Lambda Python',
+        description: 'Panduan saku 3 halaman berisi method bawaan python, kompleksitas waktu O(1) vs O(n), list slicing tricks, dan lambda sorting.',
+        category: 'summary_notes',
+        fileType: 'docx',
+        fileName: 'cheatsheet-python-datastruct.docx',
+        fileSizeMb: 1.6,
+        status: 'approved',
+        contributorName: 'Kevin Prasetya',
+        contributorNim: '24051204044',
+        isVerified: true,
+        viewsCount: 512,
+        downloadsCount: 388,
+        createdAt: '2026-10-28',
+        approvedAt: '2026-10-29',
+        previewText: "PYTHON QUICK CHEAT SHEET:\n\n- List: [x, y, z] -> Mutable, methods: .append(), .pop(), .extend()\n- Dict: {k: v} -> Hash Map, O(1) avg lookup. Hindari KeyError pakai dict.get(key, default)\n- Tuple: (x, y) -> Immutable. Hemat memori & aman untuk packing variabel.\n- Lambda sort: sorted(items, key=lambda x: x['score'], reverse=True)"
+      },
+      {
+        id: 'm5',
+        courseId: 'c3',
+        chapterId: 'ch9',
+        courseCode: 'SD103',
+        courseName: 'Pengantar Sains Data',
+        chapterNumber: 2,
+        chapterTitle: 'Data Wrangling & Eksplorasi (Pandas & Seaborn)',
+        title: 'Panduan Praktikum EDA & Visualisasi Data dengan Seaborn',
+        description: 'Langkah praktis eksplorasi dataset Titanic: data cleaning, imputasi missing value dengan median group, dan visualisasi distribusi facet grid.',
+        category: 'lecture_slides',
+        fileType: 'pdf',
+        fileName: 'modul-praktikum-eda-seaborn.pdf',
+        fileSizeMb: 7.9,
+        status: 'approved',
+        contributorName: 'Lab Sains Data UNESA',
+        contributorNim: 'LAB-SD-2024',
+        isVerified: true,
+        viewsCount: 380,
+        downloadsCount: 224,
+        createdAt: '2026-11-02',
+        approvedAt: '2026-11-03',
+        previewText: "LAB WORKBOOK: DATA WRANGLING & VISUALISASI SEABORN\n\nLangkah 1: Audit data null -> sns.heatmap(df.isnull(), cbar=False)\nLangkah 2: Imputasi umur berbasis Pclass -> df['Age'].fillna(df.groupby('Pclass')['Age'].transform('median'))\nLangkah 3: Boxplot IQR deteksi outlier tarif tiket."
+      },
+      {
+        id: 'm6',
+        courseId: 'c4',
+        chapterId: 'ch13',
+        courseCode: 'SD104',
+        courseName: 'Statistika Dasar',
+        chapterNumber: 3,
+        chapterTitle: 'Distribusi Normal & Uji Hipotesis Dasar',
+        title: 'Ringkasan Uji Hipotesis Z-Test & T-Test Satu Sampel',
+        description: 'Tabel panduan cepat pemilihan uji parametrik, rumus derajat bebas (df), cara membaca tabel T, dan contoh keputusan tolak/gagal tolak H0.',
+        category: 'summary_notes',
+        fileType: 'pdf',
+        fileName: 'ringkasan-uji-hipotesis-statistik.pdf',
+        fileSizeMb: 3.4,
+        status: 'approved',
+        contributorName: 'Alya Putri',
+        contributorNim: '23051204012',
+        isVerified: true,
+        viewsCount: 295,
+        downloadsCount: 160,
+        createdAt: '2026-11-05',
+        approvedAt: '2026-11-06',
+        previewText: "PANDUAN KEPUTUSAN UJI HIPOTESIS PARAMETRIK\n\n- Z-Test: Gunakan jika varians populasi (sigma^2) diketahui ATAU ukuran sampel n >= 30.\n- T-Test: Gunakan jika varians tidak diketahui dan n < 30 (df = n - 1).\n- Aturan Keputusan: Tolak H0 jika p-value < alpha (0.05). Kesimpulan: Terdapat perbedaan yang signifikan secara statistik."
+      },
+
+      // PENDING SUBMISSIONS
+      {
+        id: 'm7',
+        courseId: 'c1',
+        chapterId: 'ch4',
+        courseCode: 'SD101',
+        courseName: 'Kalkulus I',
+        chapterNumber: 4,
+        chapterTitle: 'Aplikasi Turunan & Optimasi Nilai Ekstrem',
+        title: 'Catatan Tangan Teorema Nilai Rata-Rata & Optimasi Ekstrem',
+        description: 'Ringkasan visual bertinta rapi mengenai uji turunan kedua f\'\'(x) untuk mencari titik balik, titik belok kurva, dan contoh persoalan optimasi volume kotak.',
+        category: 'summary_notes',
+        fileType: 'pdf',
+        fileName: 'catatan-teorema-nilai-rata-rata.pdf',
+        fileSizeMb: 3.8,
+        status: 'pending',
+        contributorName: 'Budi Santoso',
+        contributorNim: '24051204088',
+        isVerified: false,
+        viewsCount: 0,
+        downloadsCount: 0,
+        createdAt: '2026-11-14',
+        previewText: "Draft Pengajuan Budi Santoso:\n- Teorema Rolle & Teorema Nilai Rata-rata (MVT)\n- 4 Contoh pemodelan matematis optimasi luas dan volume kardus."
+      },
+      {
+        id: 'm8',
+        courseId: 'c2',
+        chapterId: 'ch5',
+        courseCode: 'SD102',
+        courseName: 'Algoritma & Pemrograman',
+        chapterNumber: 1,
+        chapterTitle: 'Logika Pemrograman & Flowchart Terstruktur',
+        title: 'Kompilasi Soal Kuis Algoritma Week 1-4 beserta Trace Table',
+        description: 'Bank latihan mandiri untuk persiapan kuis pertama. Menguji pemahaman dry-run variabel memory pada flowchart perulangan bertingkat.',
+        category: 'practice_questions',
+        fileType: 'pdf',
+        fileName: 'kuis-algoritma-dryrun-trace.pdf',
+        fileSizeMb: 2.3,
+        status: 'pending',
+        contributorName: 'Farhan Maulana',
+        contributorNim: '24051204031',
+        isVerified: false,
+        viewsCount: 0,
+        downloadsCount: 0,
+        createdAt: '2026-11-14',
+        previewText: "Draft Pengajuan Farhan Maulana:\n- 10 Soal tracing trace table variabel memori\n- Evaluasi percabangan if multi-kondisi."
+      },
+      {
+        id: 'm9',
+        courseId: 'c3',
+        chapterId: 'ch8',
+        courseCode: 'SD103',
+        courseName: 'Pengantar Sains Data',
+        chapterNumber: 1,
+        chapterTitle: 'Ekosistem Sains Data & Metodologi CRISP-DM',
+        title: 'Slide Presentasi Studi Kasus CRISP-DM pada Retail E-Commerce',
+        description: 'Deck presentasi tugas kelompok analisis alur CRISP-DM pada prediksi churn customer Tokopedia, mencakup diagram pipeline dan data dictionary.',
+        category: 'lecture_slides',
+        fileType: 'pptx',
+        fileName: 'crisp-dm-ecommerce-study.pptx',
+        fileSizeMb: 8.7,
+        status: 'pending',
+        contributorName: 'Nabila Kusuma',
+        contributorNim: '24051204015',
+        isVerified: true,
+        viewsCount: 0,
+        downloadsCount: 0,
+        createdAt: '2026-11-15',
+        previewText: "Draft Pengajuan Nabila Kusuma:\n- Diagram 6 tahapan CRISP-DM pada dataset e-commerce\n- Metrik evaluasi akurasi vs recall pada imbalance churn class."
+      },
+
+      // REJECTED SUBMISSION (DEMO DRAWER)
+      {
+        id: 'm10',
+        courseId: 'c1',
+        chapterId: 'ch1',
+        courseCode: 'SD101',
+        courseName: 'Kalkulus I',
+        chapterNumber: 1,
+        chapterTitle: 'Sistem Bilangan Real & Pertidaksamaan',
+        title: 'Foto Catatan Tulis Tangan Rumus Pertidaksamaan Nilai Mutlak',
+        description: 'Foto lembar catatan buku tulis bab 1 halaman 1-5.',
+        category: 'summary_notes',
+        fileType: 'pdf',
+        fileName: 'catatan-foto-bab1.pdf',
+        fileSizeMb: 1.2,
+        status: 'rejected',
+        rejectionReason: 'Foto catatan tidak terbaca dengan jelas (pencahayaan redup dan miring) serta halaman 3 terpotong. Mohon gunakan aplikasi pemindai dokumen (seperti CamScanner atau Adobe Scan) agar tulisan tajam, kontras tinggi, dan berformat PDF tegak sebelum diajukan kembali.',
+        contributorName: 'Dimas Arya',
+        contributorNim: '24051204001',
+        isVerified: true,
+        viewsCount: 0,
+        downloadsCount: 0,
+        createdAt: '2026-11-10',
+        previewText: 'Catatan ini ditolak oleh Admin Kurikulum FMIPA UNESA pada 11 Nov 2026.'
+      }
+    ];
+
+    let LEARNING_GAPS = [
+      {
+        id: 'gap1',
+        courseCode: 'SD101',
+        courseName: 'Kalkulus I',
+        chapterNumber: 4,
+        chapterTitle: 'Aplikasi Turunan & Optimasi Nilai Ekstrem',
+        materialsCount: 0,
+        searchQueries: 342,
+        severity: 'critical',
+        action: '342 pencarian minggu ini tanpa materi terverifikasi. Rekrut asisten dosen untuk mengunggah catatan optimasi & kurva.'
+      },
+      {
+        id: 'gap2',
+        courseCode: 'SD103',
+        courseName: 'Pengantar Sains Data',
+        chapterNumber: 3,
+        chapterTitle: 'Pengantar Machine Learning & Evaluasi Model',
+        materialsCount: 0,
+        searchQueries: 289,
+        severity: 'critical',
+        action: 'Materi persiapan UAS Sains Data belum tersedia. Minta dosen pengampu Prof. Agus mengunggah slide komparasi supervised vs unsupervised.'
+      },
+      {
+        id: 'gap3',
+        courseCode: 'SD102',
+        courseName: 'Algoritma & Pemrograman',
+        chapterNumber: 1,
+        chapterTitle: 'Logika Pemrograman & Flowchart Terstruktur',
+        materialsCount: 0,
+        searchQueries: 178,
+        severity: 'moderate',
+        action: 'Mahasiswa baru sering mencari template flowchart ISO standar. Ada 1 materi pending di antrean moderasi.'
+      },
+      {
+        id: 'gap4',
+        courseCode: 'SD104',
+        courseName: 'Statistika Dasar',
+        chapterNumber: 2,
+        chapterTitle: 'Teori Peluang & Distribusi Probabilitas Diskrit',
+        materialsCount: 0,
+        searchQueries: 154,
+        severity: 'moderate',
+        action: 'Topik Teorema Bayes dan Distribusi Binomial memerlukan latihan soal terstruktur dengan kunci pembahasan.'
+      }
+    ];
+
+    // 2. STATE MANAGEMENT
+    const state = {
+      role: 'student', // 'student' | 'contributor' | 'admin'
+      tab: 'browse',   // 'browse' | 'upload' | 'submissions' | 'queue' | 'analytics'
+      selectedCourseId: null,
+      expandedChapterId: null,
+      searchQuery: '',
+      selectedCategory: 'all',
+      activeReaderMaterial: null,
+      rejectingMaterialId: null,
+      prefilledCourseId: null,
+      prefilledChapterId: null
+    };
+
+    // 3. TOAST SYSTEM
+    function showToast(type, title, message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'pointer-events-auto flex items-start space-x-2.5 p-3 rounded-xl border bg-white shadow-xl backdrop-blur-md transition-all duration-300 animate-toast';
+
+      let borderClass = 'border-slate-200';
+      let iconSvg = '<svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+
+      if (type === 'success') {
+        borderClass = 'border-emerald-200';
+        iconSvg = '<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+      } else if (type === 'warning') {
+        borderClass = 'border-amber-200';
+        iconSvg = '<svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+      }
+
+      toast.className += ' ' + borderClass;
+      toast.innerHTML = `
+        <div class="mt-0.5">${iconSvg}</div>
+        <div class="flex-1 min-w-0">
+          <h5 class="text-xs font-bold text-slate-900 leading-tight">${title}</h5>
+          <p class="text-[11px] text-slate-600 mt-0.5 leading-snug">${message}</p>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 p-0.5">&times;</button>
+      `;
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 250);
+      }, 4500);
+    }
+
+    // 4. ACTION HANDLERS
+    function setRole(newRole) {
+      state.role = newRole;
+      if (newRole === 'student') {
+        state.tab = 'browse';
+        showToast('info', 'Switched to Student Role', 'Explore verified course notes, search chapters, and download resources.');
+      } else if (newRole === 'contributor') {
+        state.tab = 'upload';
+        showToast('info', 'Switched to Contributor Role', 'Upload new lecture notes or check revision feedback.');
+      } else if (newRole === 'admin') {
+        state.tab = 'queue';
+        showToast('warning', 'Switched to Admin / Dosen Role', 'Moderate pending student submissions and inspect curriculum learning gaps.');
+      }
+      render();
+    }
+
+    function setTab(newTab) {
+      state.tab = newTab;
+      render();
+    }
+
+    function selectCourse(courseId) {
+      state.selectedCourseId = courseId;
+      state.expandedChapterId = null;
+      render();
+    }
+
+    function toggleChapter(chId) {
+      state.expandedChapterId = (state.expandedChapterId === chId) ? null : chId;
+      render();
+    }
+
+    function setSearch(query) {
+      state.searchQuery = query;
+      render();
+    }
+
+    function setCategory(cat) {
+      state.selectedCategory = cat;
+      render();
+    }
+
+    function openReader(matId) {
+      const mat = MATERIALS.find(m => m.id === matId);
+      if (!mat) return;
+      // Log view event
+      mat.viewsCount += 1;
+      state.activeReaderMaterial = mat;
+
+      const modal = document.getElementById('reader-modal-sheet');
+      const content = document.getElementById('reader-content');
+      const footer = document.getElementById('reader-footer');
+
+      content.innerHTML = `
+        <div class="flex items-center space-x-1.5 flex-wrap gap-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/50">
+            ${mat.courseCode} • ${mat.courseName}
+          </span>
+          <span class="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+            Bab ${mat.chapterNumber}
+          </span>
+          <span class="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+            <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+            Vetted Resource
+          </span>
+        </div>
+        <h2 class="text-base font-bold text-slate-900 leading-snug mt-1">${mat.title}</h2>
+        <p class="text-xs text-slate-500">${mat.chapterTitle}</p>
+
+        <!-- Meta strip -->
+        <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/70 text-xs mt-2">
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Kontributor</span>
+            <span class="font-medium text-slate-800">${mat.contributorName}</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Format & Size</span>
+            <span class="font-medium text-slate-800 uppercase">${mat.fileType} • ${mat.fileSizeMb} MB</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Statistik Akses</span>
+            <span id="modal-access-stats" class="font-medium text-slate-800">${mat.viewsCount} views • ${mat.downloadsCount} downloads</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Tanggal Terbit</span>
+            <span class="font-medium text-slate-800">${mat.approvedAt || mat.createdAt}</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Ikhtisar Dokumen</h4>
+          <p class="text-xs text-slate-600 leading-relaxed bg-white p-2.5 rounded-lg border border-slate-100">${mat.description}</p>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Pratinjau Halaman Pertama</h4>
+          <div class="bg-[#FAF9F5] border border-amber-200/70 rounded-xl p-3.5 font-mono text-xs text-slate-800 leading-relaxed whitespace-pre-wrap shadow-inner overflow-x-auto">
+${mat.previewText || 'Memuat berkas catatan kuliah UNESA...'}
+          </div>
+        </div>
+      `;
+
+      footer.innerHTML = `
+        <button onclick="shareMaterial('${mat.id}')" class="px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-medium hover:bg-slate-50 transition-all flex items-center space-x-1">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+          <span>Share</span>
+        </button>
+
+        <button id="modal-download-btn" onclick="triggerDownload('${mat.id}')" class="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs flex items-center justify-center space-x-2 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          <span>Download Resource (${mat.fileType.toUpperCase()} • ${mat.fileSizeMb} MB)</span>
+        </button>
+      `;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeReader() {
+      const modal = document.getElementById('reader-modal-sheet');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      state.activeReaderMaterial = null;
+      render();
+    }
+
+    function triggerDownload(matId) {
+      const mat = MATERIALS.find(m => m.id === matId);
+      if (!mat) return;
+      mat.downloadsCount += 1;
+      
+      const statsElem = document.getElementById('modal-access-stats');
+      if (statsElem) {
+        statsElem.innerText = `${mat.viewsCount} views • ${mat.downloadsCount} downloads`;
+      }
+
+      showToast('success', 'Download Logged & Started', `File "${mat.fileName}" (${mat.fileSizeMb} MB) downloaded. Access event logged.`);
+    }
+
+    function shareMaterial(matId) {
+      showToast('info', 'Tautan Materi Disalin', 'Link catatan Nookly telah disalin ke clipboard.');
+    }
+
+    function switchToContributorForChapter(cId, chId) {
+      state.prefilledCourseId = cId;
+      state.prefilledChapterId = chId;
+      setRole('contributor');
+      state.tab = 'upload';
+      render();
+    }
+
+    function submitUploadForm(e) {
+      e.preventDefault();
+      const courseSelect = document.getElementById('upload-course');
+      const chapterSelect = document.getElementById('upload-chapter');
+      const titleInput = document.getElementById('upload-title');
+      const descInput = document.getElementById('upload-desc');
+      const catSelect = document.querySelector('input[name="upload-cat"]:checked') || { value: 'summary_notes' };
+
+      const selectedCourse = COURSES.find(c => c.id === courseSelect.value);
+      const selectedChapter = CHAPTERS.find(ch => ch.id === chapterSelect.value);
+
+      const newId = 'm_' + Math.random().toString(36).substring(2, 7);
+      const newMat = {
+        id: newId,
+        courseId: selectedCourse.id,
+        chapterId: selectedChapter ? selectedChapter.id : 'ch1',
+        courseCode: selectedCourse.code,
+        courseName: selectedCourse.name,
+        chapterNumber: selectedChapter ? selectedChapter.number : 1,
+        chapterTitle: selectedChapter ? selectedChapter.title : 'Bab Umum',
+        title: titleInput.value.trim(),
+        description: descInput.value.trim() || 'Catatan kuliah terverifikasi mahasiswa FMIPA UNESA.',
+        category: catSelect.value,
+        fileType: 'pdf',
+        fileName: titleInput.value.toLowerCase().replace(/[^a-z0-9]/g, '-') + '.pdf',
+        fileSizeMb: 3.2,
+        status: 'pending',
+        contributorName: 'Dimas Arya',
+        contributorNim: '24051204001',
+        isVerified: true,
+        viewsCount: 0,
+        downloadsCount: 0,
+        createdAt: '2026-11-15',
+        previewText: `Catatan Baru Diajukan:\n${descInput.value.trim()}`
+      };
+
+      MATERIALS.unshift(newMat);
+      showToast('success', 'Catatan Berhasil Diajukan!', 'Materi kini masuk antrean moderasi Admin FMIPA UNESA.');
+      state.tab = 'submissions';
+      render();
+    }
+
+    function approveMaterial(matId) {
+      const mat = MATERIALS.find(m => m.id === matId);
+      if (!mat) return;
+      mat.status = 'approved';
+      mat.approvedAt = '2026-11-15';
+
+      // Update gap if resolved
+      const gap = LEARNING_GAPS.find(g => g.chapterTitle === mat.chapterTitle);
+      if (gap) {
+        gap.materialsCount += 1;
+        gap.severity = 'healthy';
+      }
+
+      showToast('success', 'Materi Disetujui & Diterbitkan!', `"${mat.title}" kini telah tayang di perpustakaan publik.`);
+      render();
+    }
+
+    function openRejectModal(matId) {
+      state.rejectingMaterialId = matId;
+      const mat = MATERIALS.find(m => m.id === matId);
+      if (!mat) return;
+
+      const modal = document.getElementById('reject-modal');
+      const body = document.getElementById('reject-modal-body');
+
+      body.innerHTML = `
+        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-xs">
+          <div class="font-bold text-slate-800">${mat.title}</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Kontributor: ${mat.contributorName} (${mat.contributorNim})</div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-700 mb-1">Pilih Alasan Standar:</label>
+          <div class="space-y-1">
+            <button onclick="setRejectReason('Resolusi scan dokumen buram, pencahayaan redup, atau tidak terbaca dengan jelas. Mohon scan ulang menggunakan CamScanner/Adobe Scan.')" class="w-full text-left text-[11px] p-1.5 rounded border border-slate-200 hover:bg-blue-50 text-slate-600 block">
+              1. Resolusi scan buram / redup
+            </button>
+            <button onclick="setRejectReason('Halaman catatan terpotong atau urutan halaman materi tidak lengkap. Mohon periksa kembali dokumen sebelum submit.')" class="w-full text-left text-[11px] p-1.5 rounded border border-slate-200 hover:bg-blue-50 text-slate-600 block">
+              2. Halaman terpotong / acak
+            </button>
+            <button onclick="setRejectReason('Topik materi belum selaras dengan silabus kurikulum FMIPA S1 Sains Data UNESA.')" class="w-full text-left text-[11px] p-1.5 rounded border border-slate-200 hover:bg-blue-50 text-slate-600 block">
+              3. Di luar silabus UNESA
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-700 mb-1">Feedback Revisi (Wajib):</label>
+          <textarea id="reject-reason-text" rows="2" class="w-full text-xs p-2 rounded-lg border border-slate-300 focus:outline-hidden focus:border-rose-500" placeholder="Jelaskan alasan dan petunjuk revisi..."></textarea>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+          <button onclick="closeRejectModal()" class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs">Batal</button>
+          <button onclick="confirmRejectSubmit()" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold">Tolak Pengajuan</button>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function setRejectReason(text) {
+      const area = document.getElementById('reject-reason-text');
+      if (area) area.value = text;
+    }
+
+    function closeRejectModal() {
+      const modal = document.getElementById('reject-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      state.rejectingMaterialId = null;
+    }
+
+    function confirmRejectSubmit() {
+      const area = document.getElementById('reject-reason-text');
+      const reason = area ? area.value.trim() : '';
+      if (!reason) {
+        alert('Mohon isi alasan penolakan.');
+        return;
+      }
+
+      const mat = MATERIALS.find(m => m.id === state.rejectingMaterialId);
+      if (mat) {
+        mat.status = 'rejected';
+        mat.rejectionReason = reason;
+        showToast('warning', 'Pengajuan Ditolak dengan Feedback', 'Alasan evaluasi telah dikirim ke drawer status kontributor.');
+      }
+      closeRejectModal();
+      render();
+    }
+
+    function requestTAAlert(gapTitle) {
+      showToast('info', 'Notifikasi Terkirim ke Tim Asisten Dosen', `Bounty request diterbitkan untuk "${gapTitle}". Mahasiswa asisten dosen telah diberitahu.`);
+    }
+
+    // 5. VIEW RENDERERS
+    function renderRoleSwitcher() {
+      const container = document.getElementById('role-switcher-container');
+      const pendingCount = MATERIALS.filter(m => m.status === 'pending').length;
+
+      const roles = [
+        { id: 'student', label: 'Student' },
+        { id: 'contributor', label: 'Contributor' },
+        { id: 'admin', label: 'Admin', badge: pendingCount > 0 ? pendingCount : null }
+      ];
+
+      container.innerHTML = roles.map(r => {
+        const isActive = state.role === r.id;
+        return `
+          <button onclick="setRole('${r.id}')" class="relative px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+            isActive ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800'
+          }">
+            ${r.label}
+            ${r.badge ? `<span class="ml-1 bg-amber-500 text-white text-[9px] font-bold px-1 py-0.2 rounded-full">${r.badge}</span>` : ''}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderBottomNav() {
+      const container = document.getElementById('nav-buttons-container');
+      const pendingCount = MATERIALS.filter(m => m.status === 'pending').length;
+      const myCount = MATERIALS.filter(m => m.contributorNim === '24051204001').length;
+
+      let items = [];
+      if (state.role === 'student') {
+        items = [
+          { id: 'browse', label: 'Library', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
+          { id: 'upload', label: 'Contribute', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' }
+        ];
+      } else if (state.role === 'contributor') {
+        items = [
+          { id: 'upload', label: 'Upload Note', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' },
+          { id: 'submissions', label: 'My Notes', badge: myCount, icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+          { id: 'browse', label: 'Public Library', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }
+        ];
+      } else {
+        items = [
+          { id: 'queue', label: 'Moderasi', badge: pendingCount, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+          { id: 'analytics', label: 'Gaps Detector', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+          { id: 'browse', label: 'Student View', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }
+        ];
+      }
+
+      container.innerHTML = items.map(it => {
+        const isActive = state.tab === it.id;
+        return `
+          <button onclick="setTab('${it.id}')" class="flex-1 py-1 px-1 flex flex-col items-center justify-center transition-all ${
+            isActive ? 'text-blue-600 font-bold' : 'text-slate-400 hover:text-slate-600'
+          }">
+            <div class="relative">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${it.icon}"></path></svg>
+              ${it.badge ? `<span class="absolute -top-1.5 -right-2 bg-amber-500 text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">${it.badge}</span>` : ''}
+            </div>
+            <span class="text-[10px] mt-0.5">${it.label}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderStudentView() {
+      const approved = MATERIALS.filter(m => m.status === 'approved');
+      const activeCourse = COURSES.find(c => c.id === state.selectedCourseId);
+
+      // Search filter
+      const searchFiltered = approved.filter(m => {
+        const matchesQuery = !state.searchQuery || 
+          m.title.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+          m.courseName.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+          m.chapterTitle.toLowerCase().includes(state.searchQuery.toLowerCase());
+        const matchesCat = state.selectedCategory === 'all' || m.category === state.selectedCategory;
+        return matchesQuery && matchesCat;
+      });
+
+      return `
+        <div class="space-y-4 animate-fade">
+          <!-- Hero Banner -->
+          ${!state.selectedCourseId && !state.searchQuery ? `
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs relative overflow-hidden">
+              <div class="inline-flex items-center space-x-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2 py-0.5 rounded-full text-[10px] font-semibold mb-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>Backed by 81.8% student demand at UNESA</span>
+              </div>
+              <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                Stop losing lecture notes in messy chat histories.
+              </h1>
+              <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                Structured by course & chapter, vetted by admins, tracked for curriculum learning gaps.
+              </p>
+              <div class="mt-3 flex items-center space-x-2">
+                <a href="#courses-anchor" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs">
+                  Explore Course Library &darr;
+                </a>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Search & Filter Bar -->
+          <div class="space-y-2">
+            <div class="relative">
+              <input type="text" value="${state.searchQuery}" oninput="setSearch(this.value)" placeholder="Search courses, chapters, or notes (e.g., L'Hopital)..." class="w-full text-xs pl-8 pr-3 py-2 bg-white rounded-xl border border-slate-200 focus:outline-hidden focus:border-blue-600 shadow-xs">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="flex items-center space-x-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs">
+              ${[
+                { id: 'all', label: 'All' },
+                { id: 'summary_notes', label: 'Summary Notes' },
+                { id: 'lecture_slides', label: 'Lecture Slides' },
+                { id: 'practice_questions', label: 'Practice Questions' }
+              ].map(cat => `
+                <button onclick="setCategory('${cat.id}')" class="px-2.5 py-1 rounded-lg whitespace-nowrap text-[11px] font-medium transition-all ${
+                  state.selectedCategory === cat.id ? 'bg-slate-900 text-white font-semibold' : 'bg-white text-slate-600 border border-slate-200'
+                }">
+                  ${cat.label}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- If Searching -->
+          ${state.searchQuery ? `
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs text-slate-500 font-medium">
+                <span>Search results for "${state.searchQuery}"</span>
+                <span>${searchFiltered.length} notes found</span>
+              </div>
+              ${searchFiltered.length === 0 ? `
+                <div class="bg-white rounded-xl p-6 text-center border border-slate-200 space-y-2">
+                  <div class="text-xs text-slate-500">No verified notes matched this search keyword.</div>
+                  <button onclick="setRole('contributor')" class="text-xs font-semibold text-blue-600 hover:underline">+ Upload notes for this topic</button>
+                </div>
+              ` : `
+                <div class="space-y-2">
+                  ${searchFiltered.map(mat => `
+                    <div onclick="openReader('${mat.id}')" class="bg-white p-3 rounded-xl border border-slate-200/90 hover:border-blue-500 shadow-xs cursor-pointer flex items-center justify-between gap-2">
+                      <div class="space-y-0.5 min-w-0">
+                        <div class="flex items-center space-x-1 text-[10px] text-slate-500">
+                          <span class="font-bold text-slate-700">${mat.courseCode}</span>
+                          <span>•</span>
+                          <span class="truncate">${mat.chapterTitle}</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-900 truncate">${mat.title}</h4>
+                        <div class="flex items-center space-x-2 text-[10px] text-slate-400">
+                          <span>${mat.contributorName}</span>
+                          <span>•</span>
+                          <span>${mat.viewsCount} views</span>
+                          <span>•</span>
+                          <span>${mat.downloadsCount} dl</span>
+                        </div>
+                      </div>
+                      <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 shrink-0">${mat.fileType}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              `}
+            </div>
+          ` : ''}
+
+          <!-- Course Directory (If No Course Selected and Not Searching) -->
+          ${!state.searchQuery && !state.selectedCourseId ? `
+            <div id="courses-anchor" class="space-y-2.5">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Mata Kuliah Semester 1</h3>
+                <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">4 Courses</span>
+              </div>
+
+              <div class="space-y-2.5">
+                ${COURSES.map(c => {
+                  const cMats = approved.filter(m => m.courseId === c.id);
+                  return `
+                    <div onclick="selectCourse('${c.id}')" class="bg-white rounded-xl p-3.5 border border-slate-200/90 hover:border-blue-500 shadow-xs cursor-pointer transition-all flex flex-col justify-between">
+                      <div>
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/50">
+                            ${c.code} • ${c.sks} SKS
+                          </span>
+                          <span class="text-[10px] text-slate-400">Semester 1</span>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-900">${c.name}</h4>
+                        <p class="text-[11px] text-slate-500 line-clamp-2 mt-0.5">${c.description}</p>
+                      </div>
+                      <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                        <span class="truncate max-w-[190px] font-medium text-slate-600">${c.lecturer}</span>
+                        <span class="font-bold text-blue-600">${cMats.length} Catatan &rarr;</span>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Chapter Accordion View (If Course Selected) -->
+          ${!state.searchQuery && state.selectedCourseId && activeCourse ? `
+            <div class="space-y-3">
+              <button onclick="selectCourse(null)" class="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center space-x-1">
+                <span>&larr; Kembali ke Semua Mata Kuliah</span>
+              </button>
+
+              <div class="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-xs">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">${activeCourse.code} • ${activeCourse.sks} SKS</span>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900 mt-1">${activeCourse.name}</h3>
+                <p class="text-xs text-slate-500 mt-0.5">${activeCourse.description}</p>
+                <div class="text-[11px] text-slate-600 mt-2 pt-2 border-t border-slate-100 flex justify-between">
+                  <span>Dosen: ${activeCourse.lecturer}</span>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Daftar Bab & Catatan</h4>
+                ${CHAPTERS.filter(ch => ch.courseId === activeCourse.id).map(ch => {
+                  const chMats = approved.filter(m => m.chapterId === ch.id);
+                  const isExpanded = state.expandedChapterId === ch.id || state.expandedChapterId === null;
+
+                  return `
+                    <div class="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
+                      <div onclick="toggleChapter('${ch.id}')" class="p-3 flex items-center justify-between cursor-pointer hover:bg-slate-50">
+                        <div>
+                          <div class="flex items-center space-x-1.5">
+                            <span class="text-[10px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded">Bab ${ch.number}</span>
+                            <span class="text-xs font-bold text-slate-900">${ch.title}</span>
+                          </div>
+                          <p class="text-[10px] text-slate-400 mt-0.5 line-clamp-1">${ch.desc}</p>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          chMats.length > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }">
+                          ${chMats.length} catatan
+                        </span>
+                      </div>
+
+                      ${isExpanded ? `
+                        <div class="border-t border-slate-100 p-2.5 bg-slate-50/50 space-y-2">
+                          ${chMats.length === 0 ? `
+                            <!-- MINIMALIST EMPTY STATE -->
+                            <div class="bg-white rounded-xl p-4 border border-dashed border-slate-300 text-center space-y-2">
+                              <div class="text-xs font-bold text-slate-700">No vetted notes here yet</div>
+                              <p class="text-[11px] text-slate-500">Be the first to contribute notes for Bab ${ch.number}!</p>
+                              <button onclick="switchToContributorForChapter('${activeCourse.id}', '${ch.id}')" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs">
+                                + Upload Notes for this Chapter
+                              </button>
+                            </div>
+                          ` : chMats.map(mat => `
+                            <div onclick="openReader('${mat.id}')" class="bg-white p-2.5 rounded-lg border border-slate-200/80 hover:border-blue-500 shadow-xs cursor-pointer flex items-center justify-between gap-2">
+                              <div class="min-w-0 space-y-0.5">
+                                <h5 class="text-xs font-bold text-slate-900 truncate">${mat.title}</h5>
+                                <div class="flex items-center space-x-2 text-[10px] text-slate-400">
+                                  <span>${mat.contributorName}</span>
+                                  <span>•</span>
+                                  <span>${mat.fileSizeMb} MB</span>
+                                  <span>•</span>
+                                  <span>${mat.downloadsCount} dl</span>
+                                </div>
+                              </div>
+                              <span class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">${mat.fileType}</span>
+                            </div>
+                          `).join('')}
+                        </div>
+                      ` : ''}
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderContributorView() {
+      const myMats = MATERIALS.filter(m => m.contributorNim === '24051204001');
+
+      if (state.tab === 'upload') {
+        return `
+          <div class="space-y-4 animate-fade">
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs">
+              <h2 class="text-sm font-bold text-slate-900">Unggah Materi Catatan Baru</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Materi akan melalui review admin sebelum tayang di perpustakaan publik.</p>
+
+              <form onsubmit="submitUploadForm(event)" class="mt-3 space-y-3 text-xs">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Mata Kuliah</label>
+                  <select id="upload-course" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800">
+                    ${COURSES.map(c => `
+                      <option value="${c.id}" ${state.prefilledCourseId === c.id ? 'selected' : ''}>${c.code} - ${c.name} (${c.sks} SKS)</option>
+                    `).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Bab Perkuliahan</label>
+                  <select id="upload-chapter" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800">
+                    ${CHAPTERS.map(ch => `
+                      <option value="${ch.id}" ${state.prefilledChapterId === ch.id ? 'selected' : ''}>Bab ${ch.number}: ${ch.title}</option>
+                    `).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Judul Catatan</label>
+                  <input id="upload-title" required type="text" placeholder="Contoh: Rangkuman Cepat Limit & Aturan L'Hopital" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-slate-800">
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Kategori</label>
+                  <div class="grid grid-cols-3 gap-1.5 text-center">
+                    <label class="p-1.5 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                      <input type="radio" name="upload-cat" value="summary_notes" checked class="hidden peer">
+                      <span class="peer-checked:font-bold peer-checked:text-blue-600 block text-[11px]">Summary</span>
+                    </label>
+                    <label class="p-1.5 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                      <input type="radio" name="upload-cat" value="lecture_slides" class="hidden peer">
+                      <span class="peer-checked:font-bold peer-checked:text-blue-600 block text-[11px]">Slides</span>
+                    </label>
+                    <label class="p-1.5 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                      <input type="radio" name="upload-cat" value="practice_questions" class="hidden peer">
+                      <span class="peer-checked:font-bold peer-checked:text-blue-600 block text-[11px]">Bank Soal</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Deskripsi Singkat</label>
+                  <textarea id="upload-desc" rows="2" placeholder="Poin penting atau kisi-kisi yang dibahas..." class="w-full p-2 bg-white border border-slate-200 rounded-xl text-slate-800"></textarea>
+                </div>
+
+                <div class="border-2 border-dashed border-slate-200 rounded-xl p-3 text-center bg-slate-50">
+                  <div class="text-[11px] font-semibold text-slate-700">Berkas Siap Diunggah:</div>
+                  <div class="text-xs text-blue-600 font-bold mt-0.5">catatan-kuliah-sainsdata.pdf (3.2 MB)</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">Format didukung: PDF, PPTX, DOCX (Max 25 MB)</div>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs">
+                  Ajukan Catatan untuk Moderasi
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      // 'submissions' Drawer
+      return `
+        <div class="space-y-3 animate-fade">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Status Pengajuan Catatan Saya</h3>
+            <span class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">${myMats.length} Items</span>
+          </div>
+
+          <div class="space-y-2.5">
+            ${myMats.map(sub => {
+              const isApproved = sub.status === 'approved';
+              const isPending = sub.status === 'pending';
+              const isRejected = sub.status === 'rejected';
+
+              return `
+                <div class="bg-white rounded-xl p-3.5 border border-slate-200/90 shadow-xs space-y-2">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <div class="text-[10px] text-slate-500 font-bold uppercase">${sub.courseCode} • Bab ${sub.chapterNumber}</div>
+                      <h4 class="text-xs sm:text-sm font-bold text-slate-900">${sub.title}</h4>
+                    </div>
+
+                    ${isApproved ? `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">Approved</span>` : ''}
+                    ${isPending ? `<span class="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">Pending</span>` : ''}
+                    ${isRejected ? `<span class="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">Perlu Revisi</span>` : ''}
+                  </div>
+
+                  <!-- REJECTION FEEDBACK CALLOUT -->
+                  ${isRejected && sub.rejectionReason ? `
+                    <div class="bg-rose-50 border border-rose-200 rounded-lg p-2.5 text-xs text-rose-900 space-y-1">
+                      <div class="font-bold text-rose-800 text-[10px] uppercase">Catatan Penolakan Admin:</div>
+                      <p class="text-rose-700 text-[11px] leading-relaxed">"${sub.rejectionReason}"</p>
+                      <button onclick="setTab('upload')" class="text-[10px] font-bold text-rose-800 underline mt-1 block">Unggah Versi Revisi Sekarang &rarr;</button>
+                    </div>
+                  ` : ''}
+
+                  <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-100 flex justify-between">
+                    <span>${sub.fileName}</span>
+                    <span>${isApproved ? `${sub.downloadsCount} downloads` : `Diajukan: ${sub.createdAt}`}</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminView() {
+      const pending = MATERIALS.filter(m => m.status === 'pending');
+      const approved = MATERIALS.filter(m => m.status === 'approved');
+      const totalViews = MATERIALS.reduce((a, m) => a + m.viewsCount, 0);
+      const totalDownloads = MATERIALS.reduce((a, m) => a + m.downloadsCount, 0);
+      const approvalRate = Math.round((approved.length / (approved.length + MATERIALS.filter(m => m.status === 'rejected').length)) * 100) || 100;
+
+      if (state.tab === 'queue') {
+        return `
+          <div class="space-y-3 animate-fade">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Antrean Moderasi Pengajuan</h3>
+                <p class="text-[11px] text-slate-500">Verifikasi standar kurikulum FMIPA UNESA</p>
+              </div>
+              <span class="text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                ${pending.length} Pending
+              </span>
+            </div>
+
+            ${pending.length === 0 ? `
+              <div class="bg-white rounded-xl p-8 border border-slate-200 text-center space-y-2">
+                <div class="text-sm font-bold text-slate-800">Semua Pengajuan Selesai Dimoderasi!</div>
+                <p class="text-xs text-slate-500">Tidak ada materi yang menunggu verifikasi saat ini.</p>
+              </div>
+            ` : pending.map(item => `
+              <div class="bg-white rounded-xl p-3.5 border border-slate-200/90 shadow-xs space-y-2.5">
+                <div>
+                  <div class="text-[10px] font-bold text-blue-700 uppercase">${item.courseCode} • Bab ${item.chapterNumber}: ${item.chapterTitle}</div>
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-900">${item.title}</h4>
+                  <p class="text-xs text-slate-500 mt-0.5">${item.description}</p>
+                </div>
+
+                <div class="bg-slate-50 p-2 rounded-lg border border-slate-200/60 text-[10px] text-slate-600 flex justify-between">
+                  <span>Kontributor: <b>${item.contributorName}</b> (${item.contributorNim})</span>
+                  <span>${item.fileSizeMb} MB</span>
+                </div>
+
+                <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+                  <button onclick="openReader('${item.id}')" class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs">Pratinjau</button>
+                  <button onclick="openRejectModal('${item.id}')" class="px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 text-xs font-semibold">Tolak</button>
+                  <button onclick="approveMaterial('${item.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shadow-xs">Approve & Publish</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // 'analytics' View (Learning Gaps Detector)
+      const topMats = [...approved].sort((a, b) => b.downloadsCount - a.downloadsCount).slice(0, 3);
+      const maxDl = topMats[0]?.downloadsCount || 1;
+
+      return `
+        <div class="space-y-4 animate-fade">
+          <!-- KPI Metrics -->
+          <div class="grid grid-cols-2 gap-2 text-center">
+            <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-xs">
+              <span class="text-[10px] font-bold uppercase text-slate-400">Vetted Materials</span>
+              <div class="text-lg font-bold text-slate-900">${approved.length}</div>
+              <span class="text-[9px] text-emerald-600 font-semibold">Live di Mahasiswa</span>
+            </div>
+            <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-xs">
+              <span class="text-[10px] font-bold uppercase text-slate-400">Total Downloads</span>
+              <div class="text-lg font-bold text-slate-900">${totalDownloads}</div>
+              <span class="text-[9px] text-blue-600 font-semibold">Akses Berulang</span>
+            </div>
+          </div>
+
+          <!-- Top Accessed Leaderboard -->
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200/90 shadow-xs space-y-2">
+            <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Materi Paling Diandalkan Mahasiswa</h4>
+            <div class="space-y-2 pt-1">
+              ${topMats.map((m, i) => {
+                const widthPercent = Math.round((m.downloadsCount / maxDl) * 100);
+                return `
+                  <div class="space-y-1">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="truncate text-slate-800 font-semibold">#${i+1} ${m.title}</span>
+                      <span class="font-bold text-slate-600 shrink-0 ml-2">${m.downloadsCount} dl</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                      <div class="bg-blue-600 h-full rounded-full" style="width: ${widthPercent}%"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- ACCESS GAPS DETECTOR (CRUCIAL FEATURE) -->
+          <div class="bg-white rounded-xl p-3.5 border border-rose-200 shadow-xs space-y-3">
+            <div>
+              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">Kebutuhan Mahasiswa</span>
+              <h3 class="text-xs sm:text-sm font-bold text-slate-900 mt-1">Access Gaps Detector (Bab Belum Tercukupi)</h3>
+              <p class="text-[11px] text-slate-500">Mendeteksi bab dengan pencarian tinggi namun ketersediaan catatan 0.</p>
+            </div>
+
+            <div class="space-y-2">
+              ${LEARNING_GAPS.map(gap => `
+                <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1.5">
+                  <div class="flex items-start justify-between gap-1">
+                    <div>
+                      <div class="text-[9px] font-bold text-slate-500 uppercase">${gap.courseCode} • Bab ${gap.chapterNumber}</div>
+                      <h5 class="text-xs font-bold text-slate-900">${gap.chapterTitle}</h5>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded-full shrink-0 ${
+                      gap.severity === 'critical' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
+                    }">
+                      ${gap.severity === 'critical' ? 'Critical Gap (0 Note)' : 'Moderate Gap'}
+                    </span>
+                  </div>
+
+                  <div class="text-[10px] text-slate-600 flex space-x-2">
+                    <span class="font-bold text-rose-600">${gap.searchQueries} pencarian</span>
+                    <span>•</span>
+                    <span>Tersedia: ${gap.materialsCount} Catatan</span>
+                  </div>
+
+                  <p class="text-[10px] text-slate-600 bg-white p-2 rounded border border-slate-200">
+                    💡 <b>Rekomendasi:</b> ${gap.action}
+                  </p>
+
+                  <div class="flex justify-end pt-1">
+                    <button onclick="requestTAAlert('${gap.chapterTitle}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-semibold">
+                      Kirim Alert Request ke Asisten Dosen
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 6. MAIN RENDER
+    function render() {
+      renderRoleSwitcher();
+      renderBottomNav();
+
+      const main = document.getElementById('app-content');
+      if (state.role === 'student' || state.tab === 'browse') {
+        main.innerHTML = renderStudentView();
+      } else if (state.role === 'contributor' && (state.tab === 'upload' || state.tab === 'submissions')) {
+        main.innerHTML = renderContributorView();
+      } else if (state.role === 'admin' && (state.tab === 'queue' || state.tab === 'analytics')) {
+        main.innerHTML = renderAdminView();
+      }
+    }
+
+    // Initial boot
+    render();
+  </script>
+</body>
+</html>
